@@ -1,55 +1,88 @@
 /**
- * Set the initial state
+ * Initialize the player and other variables
  */
 /**
- * MakeCode Arcade Game: Space Dodger
+ * Description: A simple space-themed game where the player controls a spaceship to collect stars and avoid asteroids.
  */
-// Collision with enemy mechanics - player loses
+/**
+ * Title: Space Explorer
+ */
+// Function to spawn stars
+function spawnStar () {
+    star = sprites.create(img`
+        . . . . . . . . . 8 . . . . . 
+        . . . . . . . . 8 8 . . . . . 
+        . . . . . . . 8 8 8 . . . . . 
+        . . . . . . 8 8 8 8 8 . . . . 
+        . . . . . 8 8 8 8 8 8 8 . . . 
+        . . . . 8 8 8 8 8 8 8 8 8 . . 
+        . . . . 8 8 8 8 8 8 8 8 8 . . 
+        . . . . . 8 8 8 8 8 8 8 . . . 
+        . . . . . . 8 8 8 8 8 . . . . 
+        . . . . . . . 8 8 8 . . . . . 
+        . . . . . . . . 8 8 . . . . . 
+        . . . . . . . . . 8 . . . . . 
+        `, SpriteKind.Food)
+    star.setVelocity(-50, 0)
+    star.setPosition(160, randint(5, 115))
+    star.setFlag(SpriteFlag.AutoDestroy, true)
+}
+// Function to spawn asteroids
+function spawnAsteroid () {
+    asteroid = sprites.create(img`
+        . . . . . . c c c c 6 . . . . 
+        . . . . c 6 7 7 7 7 7 6 . . . 
+        . . . c 7 7 7 7 7 7 7 7 6 . . 
+        . . c 7 7 7 7 7 7 7 7 7 7 6 6 
+        . c 6 7 7 7 7 7 7 7 7 7 7 7 7 
+        c 6 7 7 7 7 7 7 7 7 7 7 7 7 7 
+        c 6 6 7 7 7 7 7 7 7 7 7 7 7 7 
+        c c 6 6 6 6 6 6 6 6 6 6 6 6 6 
+        . c c 6 6 6 6 6 6 6 6 6 6 6 . 
+        . . c c 6 6 6 6 6 6 6 c c . . 
+        . . . . c c c c c c c c . . . 
+        `, SpriteKind.Enemy)
+    asteroid.setVelocity(-50, 0)
+    asteroid.setPosition(160, randint(5, 115))
+    asteroid.setFlag(SpriteFlag.AutoDestroy, true)
+}
+// Collision event: player and star
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSprite) {
+    otherSprite.destroy()
+    info.changeScoreBy(1)
+    music.powerUp.play()
+})
+// Collision event: player and asteroid
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
+    otherSprite.destroy()
     game.over(false)
 })
-let enemy: Sprite = null
-let enemySpeed = 50
-let level = 1
-// Initialize the player
+let asteroid: Sprite = null
+let star: Sprite = null
+let gameOver = false
+let score = 0
+// Create the player sprite
 let player = sprites.create(img`
-    . . . . . . . . . . . 
-    . . . f f f f f f . . 
-    . . f 5 5 5 5 5 5 f . 
-    . f 5 5 5 5 5 5 5 5 f 
-    . f 5 5 5 5 5 5 5 5 f 
-    . f 5 5 5 5 5 5 5 5 f 
-    . . f 5 5 5 5 5 5 f . 
-    . . . f f f f f f . . 
+    . . . . . . . . . . . . . . . . 
+    . . . . . . . . . . . . . . . . 
+    . . . . . . 8 8 8 . . . . . . . 
+    . . . . . 8 8 8 8 8 . . . . . . 
+    . . . . 8 8 8 8 8 8 8 . . . . . 
+    . . . . 8 8 8 8 8 8 8 . . . . . 
+    . . . . . 8 8 8 8 8 . . . . . . 
+    . . . . . . 8 8 8 . . . . . . . 
+    . . . . . . . 8 . . . . . . . . 
+    . . . . . . . . . . . . . . . . 
     `, SpriteKind.Player)
+// Set player controls
 controller.moveSprite(player)
 player.setStayInScreen(true)
-// Score and win condition
-info.startCountdown(60)
-info.score()
-// Instructions for player
-game.showLongText("Move the spaceship with arrow keys to avoid enemies. Survive until the timer runs out to win!", DialogLayout.Center)
-game.onUpdate(function () {
-    info.changeScoreBy(1)
-    if (info.score() >= 1000) {
-        game.over(true)
-    }
-})
-// Create enemies
+// Initialize score and provide instructions
+info.setScore(0)
+game.splash("Collect the stars and avoid the asteroids!")
 game.onUpdateInterval(1000, function () {
-    enemy = sprites.create(img`
-        . . . . . . . . . . . . . . 
-        . . . . . 3 f f f 3 . . . . 
-        . . . 3 f f f f f f f f . . 
-        . . f f f f f f f f f f f . 
-        . . 3 f f f f 3 f f f f f . 
-        . . f f f f f f f f f f 3 . 
-        . . f f f f f f f f f f f . 
-        . . . 3 f f f f f f f 3 . . 
-        . . . . . 3 f f f 3 . . . . 
-        . . . . . . . . . . . . . . 
-        `, SpriteKind.Enemy)
-    enemy.setVelocity(0, enemySpeed)
-    enemy.setPosition(Math.randomRange(0, scene.screenWidth()), 0)
-    enemy.setFlag(SpriteFlag.AutoDestroy, true)
+    spawnAsteroid()
+})
+game.onUpdateInterval(1500, function () {
+    spawnStar()
 })
